@@ -1,6 +1,6 @@
 # Dual Title
 
-<img width="1069" height="510" alt="image" src="https://github.com/user-attachments/assets/a9ad867d-3f2e-425d-9d40-0fcf5077682a" />
+<img width="905" height="395" alt="image" src="https://github.com/user-attachments/assets/44025aec-47e4-4632-81c2-6488e7a883c0" />
 
 ---
 
