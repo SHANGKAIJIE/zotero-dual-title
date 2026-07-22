@@ -1,0 +1,101 @@
+/* Dual Title — 条目列表双行显示样式（flexbox 包装方案） */
+
+/* 行容器：非标题列垂直居中 */
+#zotero-items-tree .row.dual-row-item {
+    align-items: center !important;
+}
+
+/* 标题列：flex column 双行垂直堆叠
+   行1: dual-row-first-line（indent + twisty + icon + cell-text 水平排列）
+   行2: dual-row-translation（垂直对齐于原标题下方） */
+#zotero-items-tree .row.dual-row-item .cell.primary.dual-row-primary {
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: center !important;
+    align-items: flex-start !important;
+    align-self: stretch !important;
+    text-align: left !important;
+    padding-top: 1px;
+    padding-bottom: 1px;
+}
+
+/* 第一行：indent + twisty + 图标 + 原标题 水平排列 */
+#zotero-items-tree .row.dual-row-item .cell.primary .dual-row-first-line {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    justify-content: flex-start !important;
+    flex: 0 1 auto;
+    width: 100%;
+    min-width: 0;
+    overflow: hidden;
+}
+
+/* 原标题左对齐、溢出省略 */
+#zotero-items-tree .row.dual-row-item .cell.primary .dual-row-first-line .cell-text {
+    flex: 1 1 auto;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    text-align: left !important;
+    white-space: nowrap;
+}
+
+/* 翻译文本：第二行，与原标题文字左对齐
+   padding-left 由 JS 动态计算（getBoundingClientRect） */
+#zotero-items-tree .row.dual-row-item .cell.primary .dual-row-translation {
+    flex: 0 0 auto;
+    color: var(--fill-secondary);
+    font-family: "Noto Sans SC", "Microsoft YaHei", "PingFang SC",
+                 "Hiragino Sans GB", system-ui, -apple-system, sans-serif;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    line-height: 1.3;
+    width: 100%;
+    box-sizing: border-box;
+    text-align: left !important;
+}
+
+/* 行序：原标题在上 */
+#zotero-items-tree .dual-row-primary .dual-row-first-line     { order: 1; }
+#zotero-items-tree .dual-row-primary .dual-row-translation    { order: 2; }
+
+/* 行序：翻译在上 */
+#zotero-items-tree .dual-row-primary.translation-first .dual-row-first-line  { order: 2; }
+#zotero-items-tree .dual-row-primary.translation-first .dual-row-translation { order: 1; }
+
+/* 无翻译时：隐藏翻译行，恢复单行居中布局 */
+#zotero-items-tree .dual-row-primary:not(.has-translation) .dual-row-translation {
+    display: none !important;
+}
+#zotero-items-tree .dual-row-primary:not(.has-translation) {
+    align-self: center !important;
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    justify-content: flex-start !important;
+}
+#zotero-items-tree .dual-row-primary:not(.has-translation) .dual-row-first-line {
+    flex: 1 1 auto;
+}
+
+/* === 选中态：翻译文字变白 === */
+#zotero-items-tree .virtualized-table:focus-within .row.selected .dual-row-translation,
+#zotero-items-tree .row.selected .dual-row-translation {
+    color: var(--accent-white) !important;
+}
+
+/* === 暗色主题适配 === */
+@media (prefers-color-scheme: dark) {
+    #zotero-items-tree .row.dual-row-item:not(.selected) .cell.primary .dual-row-translation {
+        color: #aaa;
+    }
+}
+
+/* === 偏好面板：数字输入框文字居中 === */
+#zotero-prefpane-dualtitle-translationFontSize,
+#zotero-prefpane-dualtitle-translationGap,
+#zotero-prefpane-dualtitle-rowHeightMultiplier {
+    text-align: center;
+}

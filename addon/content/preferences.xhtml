@@ -1,0 +1,111 @@
+<linkset>
+  <html:link rel="localization" href="__addonRef__-preferences.ftl" />
+</linkset>
+<html:style>
+  /* 偏好面板样式（参考 zotero-hover-translate-eudic） */
+  html|h3 {
+    font-size: 18px !important;
+    font-weight: 700 !important;
+    margin: 0 0 6px 0 !important;
+  }
+  /* 一致的标签列宽度 */
+  .pref-label {
+    width: 110px;
+    min-width: 110px;
+    text-align: right;
+    margin-right: 6px;
+  }
+  /* 数字输入框文字居中（Bug #9） */
+  html|input[type="number"] {
+    text-align: center;
+  }
+</html:style>
+<groupbox
+  onload="Zotero.__addonInstance__.hooks.onPrefsEvent('load', { window });"
+>
+
+  <!-- ============ 双行标题设置 ============ -->
+  <groupbox>
+    <label><html:h3 data-l10n-id="pref-section-basic"></html:h3></label>
+
+    <!-- 启用双行标题 -->
+    <checkbox
+      id="zotero-prefpane-__addonRef__-enableDualTitle"
+      preference="enableDualTitle"
+      data-l10n-id="pref-enable-dual-title"
+    />
+
+    <!-- 标题内容（使用 menulist，参考 eudic 样式） -->
+    <hbox align="center">
+      <label class="pref-label" data-l10n-id="pref-display-mode" />
+      <menulist
+        id="zotero-prefpane-__addonRef__-displayMode"
+        style="min-width: 200px"
+      >
+        <menupopup>
+          <menuitem value="original" data-l10n-id="pref-display-mode-original" />
+          <menuitem value="translated" data-l10n-id="pref-display-mode-translated" />
+          <menuitem value="original-translated" data-l10n-id="pref-display-mode-original-translated" />
+          <menuitem value="translated-original" data-l10n-id="pref-display-mode-translated-original" />
+        </menupopup>
+      </menulist>
+    </hbox>
+
+    <!-- 翻译字号（px） -->
+    <hbox align="center">
+      <label class="pref-label" data-l10n-id="pref-font-size" />
+      <html:input
+        type="number"
+        min="6"
+        max="32"
+        step="1"
+        id="zotero-prefpane-__addonRef__-translationFontSize"
+        style="width: 80px"
+      />
+      <label data-l10n-id="pref-font-size-unit" style="margin-left: 4px" />
+    </hbox>
+
+    <!-- 标题间距（px） -->
+    <hbox align="center">
+      <label class="pref-label" data-l10n-id="pref-gap" />
+      <html:input
+        type="number"
+        min="0"
+        max="40"
+        step="1"
+        id="zotero-prefpane-__addonRef__-translationGap"
+        style="width: 80px"
+      />
+      <label data-l10n-id="pref-gap-unit" style="margin-left: 4px" />
+    </hbox>
+
+    <!-- 条目行高倍率 -->
+    <hbox align="center">
+      <label class="pref-label" data-l10n-id="pref-row-height" />
+      <html:input
+        type="number"
+        min="1"
+        max="5"
+        step="0.1"
+        id="zotero-prefpane-__addonRef__-rowHeightMultiplier"
+        style="width: 80px"
+      />
+      <label data-l10n-id="pref-row-height-unit" style="margin-left: 4px" />
+    </hbox>
+
+    <!-- 自动翻译 -->
+    <checkbox
+      id="zotero-prefpane-__addonRef__-autoTranslate"
+      preference="autoTranslate"
+      data-l10n-id="pref-auto-translate"
+    />
+  </groupbox>
+
+  <!-- ============ 其他 ============ -->
+  <groupbox>
+    <html:label
+      data-l10n-id="pref-help"
+      data-l10n-args='{"time": "__buildTime__","name": "__addonName__","version":"__buildVersion__"}'
+    ></html:label>
+  </groupbox>
+</groupbox>
