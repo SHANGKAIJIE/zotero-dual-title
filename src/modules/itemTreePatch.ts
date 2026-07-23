@@ -66,11 +66,29 @@ function tryPatch() {
       }
 
       if (isRegular) {
+        // 清理可能遗留的 padding（之前作为下属条目渲染时设置的）
+        const pc = node.querySelector('.cell.primary') as HTMLElement | null;
+        if (pc) {
+          pc.style.paddingTop = '';
+          pc.style.paddingBottom = '';
+        }
         injectTranslation(node, row.ref);
       } else {
         node.style.removeProperty('height');
         node.style.removeProperty('overflow');
         node.classList.remove('dual-title-child-row');
+        // 清理之前可能设置的 padding
+        node.style.paddingTop = '';
+        node.style.paddingBottom = '';
+        // 在 follow 模式下，给下属条目的 primaryCell 设置 padding 实现垂直居中
+        if (childMode === 'follow' && _originalRowHeight && tree._rowHeight > _originalRowHeight) {
+          const pc = node.querySelector('.cell.primary') as HTMLElement | null;
+          if (pc) {
+            const extra = tree._rowHeight - _originalRowHeight;
+            pc.style.paddingTop = `${Math.floor(extra / 2)}px`;
+            pc.style.paddingBottom = `${Math.ceil(extra / 2)}px`;
+          }
+        }
         if (node.classList.contains('dual-row-item')) {
           const primaryCell = node.querySelector('.cell.primary') as HTMLElement;
           if (primaryCell) cleanupDualRowClasses(node, primaryCell);
