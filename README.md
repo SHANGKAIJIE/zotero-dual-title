@@ -1,13 +1,13 @@
 # Dual Title
 
-<img width="905" height="395" alt="image" src="https://github.com/user-attachments/assets/44025aec-47e4-4632-81c2-6488e7a883c0" />
-
----
-
 在 Zotero 条目列表中将翻译标题显示为第二行，无需额外列。
 
 ![Screenshot](https://img.shields.io/badge/Zotero-7%2F8%2F9-green)
 ![License](https://img.shields.io/badge/License-AGPL--3.0-blue)
+
+<img width="905" height="395" alt="image" src="https://github.com/user-attachments/assets/44025aec-47e4-4632-81c2-6488e7a883c0" />
+
+---
 
 ## 功能
 
