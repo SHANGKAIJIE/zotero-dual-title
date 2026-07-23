@@ -2,8 +2,9 @@
 
 在 Zotero 条目列表中将翻译标题显示为第二行，无需额外列。
 
-![Screenshot](https://img.shields.io/badge/Zotero-7%2F8%2F9-green)
+![Zotero 7+](https://img.shields.io/badge/Zotero-7%2F8%2F9-green)
 ![License](https://img.shields.io/badge/License-AGPL--3.0-blue)
+![Version](https://img.shields.io/badge/Version-0.1.1-blue)
 
 <img width="905" height="395" alt="image" src="https://github.com/user-attachments/assets/44025aec-47e4-4632-81c2-6488e7a883c0" />
 
@@ -18,7 +19,10 @@
   - 翻译标题 ＋ 原标题
   - 仅原标题
   - 仅翻译标题
-- **条目行高调整**：可调节双行显示时的行高倍率
+- **条目行高调整**：可调节双行显示时的行高倍率（支持小数）
+- **下属条目行高**：独立控制附件、笔记等下属条目的行高（跟随主条目 / 保持不变）
+- **翻译颜色自定义**：自由选择翻译标题的文字颜色，支持恢复默认
+- **zotero-style 兼容**：与 [zotero-style](https://github.com/MuiseDestiny/zotero-style) 的标签小圆点、列图标等特性兼容
 - **新条目自动翻译**：添加新条目时自动翻译非中文标题
 - **翻译管理**：翻译结果存储在条目的 extra 字段中，支持 `titleTranslation` 和 `dualRowTranslation` 两种 key
 
@@ -56,25 +60,53 @@ npm run build
 | 启用双行标题显示 | 启用 | 插件总开关 |
 | 标题内容 | 原标题 ＋ 翻译标题 | 四种显示模式 |
 | 翻译字号 | 12px | 翻译标题的字体大小 |
+| 翻译颜色 | — | 翻译标题的文字颜色（拾色器选择，可恢复默认） |
 | 标题间距 | 2px | 原标题行与翻译行之间的间距 |
-| 条目行高 | 2 倍 | 双行显示时的行高倍率（支持小数） |
+| 主条目行高 | 2 倍 | 有翻译的主条目行高倍率（支持小数） |
+| 下属条目行高 | 保持不变 | 附件、笔记等下属条目的行高策略（跟随主条目 / 保持不变） |
 | 新条目自动翻译 | 启用 | 添加新条目时自动翻译非中文标题 |
+
+> **下属条目行高说明：**
+> - **跟随主条目改变**：下属条目与主条目使用相同的行高倍率
+> - **保持不变**：下属条目保持 1 倍原始行高，不受主条目行高影响
 
 ## 技术架构
 
 ### 核心机制
 
-插件通过**包装（monkey-patch）** Zotero 条目列表的 `_renderItem` 方法，在标题单元格渲染完成后注入翻译行。
+插件通过**包装（monkey-patch）** Zotero 条目列表 VirtualizedTable 的 `_renderItem` 方法，在标题单元格渲染完成后注入翻译行。
+
+```
+VirtualizedTable._renderItem (patched)
+  ├── 原始 VirtualizedTable._renderItem
+  │   ├── itemsView._renderItem (Zotero 原生)
+  │   │   └── 行 div（含原标题、图标等）
+  │   └── 行高设置 / 事件绑定
+  └── injectTranslation(node, item)  ← 我们的注入点
+      ├── 构建 firstLine 容器
+      ├── 将 indent/twisty/icon/cell-text 移入 firstLine
+      └── 追加翻译行 transSpan
+```
+
+渲染后的 DOM 结构：
 
 ```
 条目 Cell（flex column）
 ├── .dual-row-first-line（flex row）
-│   ├── .cell-indent       ← 层级缩进
-│   ├── .twisty            ← 展开/折叠按钮
-│   ├── .cell-icon         ← 条目类型图标
-│   └── .cell-text         ← 原标题文字
-└── .dual-row-translation  ← 翻译标题文字（左对齐）
+│   ├── .cell-indent             ← 层级缩进
+│   ├── .twisty                  ← 展开/折叠按钮
+│   ├── .cell-icon               ← 条目类型图标
+│   ├── .colored-tag-swatches    ← zotero-style 标签小圆点
+│   └── .cell-text               ← 原标题文字
+└── .dual-row-translation        ← 翻译标题文字
 ```
+
+### 下属条目行高
+
+使用 VirtualizedTable 原生 API `updateCustomRowHeights()` 实现变高行支持，无需 CSS hack：
+
+- **跟随模式**：清空自定义行高，所有行使用统一的 `_rowHeight`
+- **保持模式**：为非主条目行设置 `[index, _originalRowHeight]` 自定义高度
 
 ### 翻译存储
 
@@ -85,13 +117,13 @@ extra:
   dualRowTranslation: 翻译后的标题
 ```
 
-同时兼容 PDF Translate 的 `titleTranslation` 格式。
+同时兼容 PDF Translate 的 `titleTranslation` 格式（优先读取 `dualRowTranslation`）。
 
 ### 依赖关系
 
 - **PDF Translate API**：通过 `Zotero.PDFTranslate.api.translate(text, { pluginID, itemID })` 调用翻译
 - **Zotero Prefs**：通过 `extensions.zotero.dualtitle.*` 偏好键存储设置
-- **Zotero MenuManager**：右键菜单注册（目前禁用，排查兼容性问题）
+- **zotero-style**：通过 ztoolkit 的 `addRenderCellHook` 机制兼容，无需额外配置
 
 ## 开发
 
@@ -102,7 +134,7 @@ src/
 ├── index.ts                    # 入口
 ├── hooks.ts                    # 生命周期钩子（startup/shutdown/notify）
 ├── modules/
-│   ├── itemTreePatch.ts        # 核心：_renderItem 包装 + 翻译注入
+│   ├── itemTreePatch.ts        # 核心：VirtualizedTable._renderItem 包装 + 翻译注入
 │   ├── menu.ts                 # 右键菜单注册
 │   └── translate.ts            # 翻译管理（PDF Translate API 调用）
 └── utils/

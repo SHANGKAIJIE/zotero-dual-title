@@ -10,9 +10,11 @@ declare namespace _ZoteroTypes {
       "enableDualTitle": boolean;
       "displayMode": string;
       "translationFontSize": number;
+      "translationColor": string;
       "translationGap": number;
       "autoTranslate": boolean;
       "rowHeightMultiplier": string;
+      "childRowHeightMode": string;
     };
   }
 }

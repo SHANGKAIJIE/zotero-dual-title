@@ -11,8 +11,10 @@ const DEFAULT_VALUES: Record<string, any> = {
   enableDualTitle: true,
   displayMode: "original-translated",
   translationFontSize: 12,
+  translationColor: "",
   translationGap: 2,
   rowHeightMultiplier: "2",
+  childRowHeightMode: "keep",
   autoTranslate: true,
 };
 

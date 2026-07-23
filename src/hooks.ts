@@ -115,8 +115,10 @@ function registerPrefObserver() {
     "enableDualTitle",
     "displayMode",
     "translationFontSize",
+    "translationColor",
     "translationGap",
     "rowHeightMultiplier",
+    "childRowHeightMode",
   ];
 
   for (const key of watchedKeys) {
@@ -293,6 +295,7 @@ function bindPrefPaneUI(win: Window | undefined) {
   // menulist 是 XUL 元素，但为保险起见仍手动绑定
   const menulistBindings = [
     { id: `zotero-prefpane-${ref}-displayMode`, key: "displayMode" },
+    { id: `zotero-prefpane-${ref}-childRowHeightMode`, key: "childRowHeightMode" },
   ];
   for (const { id, key } of menulistBindings) {
     const sel = doc.getElementById(id) as any;
@@ -316,6 +319,7 @@ function bindPrefPaneUI(win: Window | undefined) {
   // 的 getPrefType 检测到 INT 类型后用 setIntPref 截断小数
   const inputBindings = [
     { id: `zotero-prefpane-${ref}-translationFontSize`, key: "translationFontSize" },
+    { id: `zotero-prefpane-${ref}-translationColor`, key: "translationColor" },
     { id: `zotero-prefpane-${ref}-translationGap`, key: "translationGap" },
     { id: `zotero-prefpane-${ref}-rowHeightMultiplier`, key: "rowHeightMultiplier" },
   ];
@@ -340,6 +344,10 @@ function bindPrefPaneUI(win: Window | undefined) {
             inp.value = '2';
           }
         }
+      } else if (key === 'translationColor') {
+        // 颜色选择器：空值（使用 CSS 默认）时显示灰色 #808080，但存储仍为空
+        const stored = String(Zotero.Prefs.get(fullKey, true) ?? '');
+        inp.value = stored || '#808080';
       } else {
         inp.value = String(Zotero.Prefs.get(fullKey, true) ?? '');
       }
@@ -358,6 +366,23 @@ function bindPrefPaneUI(win: Window | undefined) {
         try { refresh(); } catch (e) {}
       } catch (e) {
         Zotero.log("[DualTitle] input handler error: " + e);
+      }
+    });
+  }
+
+  // —— 翻译颜色「恢复默认」按钮 ——
+  const resetBtn = doc.getElementById(`zotero-prefpane-${ref}-translationColorReset`);
+  const colorInput = doc.getElementById(`zotero-prefpane-${ref}-translationColor`) as HTMLInputElement | null;
+  if (resetBtn && colorInput) {
+    resetBtn.addEventListener("click", () => {
+      try {
+        // 清除偏好（空 = 使用 CSS 默认色）
+        Zotero.Prefs.set(`${prefix}.translationColor`, "", true);
+        colorInput.value = "#808080";
+        Zotero.log("[DualTitle] translationColor reset to default");
+        try { refresh(); } catch (e) {}
+      } catch (e) {
+        Zotero.log("[DualTitle] color reset error: " + e);
       }
     });
   }

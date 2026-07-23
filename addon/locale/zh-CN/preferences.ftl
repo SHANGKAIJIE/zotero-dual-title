@@ -15,9 +15,16 @@ pref-auto-translate =
     .label = 新条目自动翻译
 pref-font-size = 翻译字号：
 pref-font-size-unit = px
+pref-font-color = 翻译颜色：
+pref-font-color-reset = 恢复默认
 pref-gap = 标题间距：
 pref-gap-unit = px
-pref-row-height = 条目行高：
+pref-row-height = 主条目行高：
 pref-row-height-unit = 倍
+pref-child-row-height = 下属条目行高：
+pref-child-row-height-follow =
+    .label = 跟随主条目改变
+pref-child-row-height-keep =
+    .label = 保持不变
 
 pref-help = Dual Title v{ $version } ({ $time })

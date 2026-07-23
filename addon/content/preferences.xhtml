@@ -15,6 +15,15 @@
     text-align: right;
     margin-right: 6px;
   }
+  /* 链接式文本按钮 */
+  .text-link {
+    color: -moz-nativehyperlinktext;
+    text-decoration: underline;
+    cursor: pointer;
+  }
+  .text-link:hover {
+    color: highlight;
+  }
   /* 数字输入框文字居中（Bug #9） */
   html|input[type="number"] {
     text-align: center;
@@ -65,6 +74,22 @@
       <label data-l10n-id="pref-font-size-unit" style="margin-left: 4px" />
     </hbox>
 
+    <!-- 翻译颜色 -->
+    <hbox align="center">
+      <label class="pref-label" data-l10n-id="pref-font-color" />
+      <html:input
+        type="color"
+        id="zotero-prefpane-__addonRef__-translationColor"
+        style="width: 40px; height: 24px; padding: 0; border: none; cursor: pointer;"
+      />
+      <label
+        id="zotero-prefpane-__addonRef__-translationColorReset"
+        class="text-link"
+        data-l10n-id="pref-font-color-reset"
+        style="margin-left: 8px; cursor: pointer;"
+      ></label>
+    </hbox>
+
     <!-- 标题间距（px） -->
     <hbox align="center">
       <label class="pref-label" data-l10n-id="pref-gap" />
@@ -79,7 +104,7 @@
       <label data-l10n-id="pref-gap-unit" style="margin-left: 4px" />
     </hbox>
 
-    <!-- 条目行高倍率 -->
+    <!-- 主条目行高倍率 -->
     <hbox align="center">
       <label class="pref-label" data-l10n-id="pref-row-height" />
       <html:input
@@ -91,6 +116,20 @@
         style="width: 80px"
       />
       <label data-l10n-id="pref-row-height-unit" style="margin-left: 4px" />
+    </hbox>
+
+    <!-- 下属条目行高 -->
+    <hbox align="center">
+      <label class="pref-label" data-l10n-id="pref-child-row-height" />
+      <menulist
+        id="zotero-prefpane-__addonRef__-childRowHeightMode"
+        style="min-width: 200px"
+      >
+        <menupopup>
+          <menuitem value="follow" data-l10n-id="pref-child-row-height-follow" />
+          <menuitem value="keep" data-l10n-id="pref-child-row-height-keep" />
+        </menupopup>
+      </menulist>
     </hbox>
 
     <!-- 自动翻译 -->
