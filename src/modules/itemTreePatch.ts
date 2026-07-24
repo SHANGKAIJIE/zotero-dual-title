@@ -46,6 +46,14 @@ function tryPatch() {
     return;
   }
 
+  // 透传补丁 itemsView._renderItem — 保留 ztoolkit 的 _renderCell hook 链
+  const origIVRI = itemsView._renderItem;
+  itemsView._renderItem = function(
+    index: number, selection: any, oldDiv: HTMLElement | null, columns: any[],
+  ) {
+    return origIVRI.call(this, index, selection, oldDiv, columns);
+  };
+
   // 直接补丁 VirtualizedTable._renderItem
   // itemsView._renderItem 在 VirtualizedTable 创建时已 bind(this) 到 tree.props.renderItem
   // 修改 itemsView._renderItem 不会影响 tree.props.renderItem
@@ -107,23 +115,20 @@ function tryPatch() {
   scheduleDelayedRefresh();
 }
 
-/** 等待 rows 加载后强制 VirtualizedTable 重绘所有可见行 */
+/** 等待 rows 加载后强制刷新（触发 React 重渲染新建 renderItem 绑定） */
 function scheduleDelayedRefresh() {
   let tries = 0;
   let triggered = false;
-  const attempt = () => {
+  const attempt = async () => {
     if (triggered) return;
     try {
       if (_itemsView && _itemsView.rowCount > 0) {
         triggered = true;
         Zotero.log(`[DualTitle] Delayed refresh at try ${tries}: ${_itemsView.rowCount} rows`);
-        const tree = _itemsView.tree;
-        if (tree) {
-          ensureChildHeights();
-          tree.invalidate?.();
-          tree.rerender?.();
-          Zotero.log("[DualTitle] tree invalidate+rerender called");
-        }
+        // 等待数据加载 → React 重渲染 → 新建 renderItem 绑定（含 itemsView 透传补丁）
+        try { await _itemsView.refresh?.(); } catch (e) {}
+        ensureChildHeights();
+        forceRerender();
         return;
       }
     } catch (e) {
@@ -255,6 +260,12 @@ function ensureChildHeights() {
   }
 }
 
+function updateCellText(ct: HTMLElement, text: string) {
+  let tn = Array.from(ct.childNodes).find(n => n.nodeType === 3);
+  if (tn) { tn.textContent = text; }
+  else { ct.insertBefore(ct.ownerDocument!.createTextNode(text), ct.firstChild); }
+}
+
 function cleanupDualRowClasses(div: HTMLElement, primaryCell: HTMLElement, item?: Zotero.Item) {
   div.classList.remove('dual-row-item');
   primaryCell.classList.remove('dual-row-primary', 'has-translation', 'translation-first');
@@ -264,11 +275,9 @@ function cleanupDualRowClasses(div: HTMLElement, primaryCell: HTMLElement, item?
   if (ct) {
     if (item) {
       const realTitle = item.getField('title') as string;
-      if (realTitle) {
-        ct.textContent = realTitle;
-      }
+      if (realTitle) updateCellText(ct, realTitle);
     } else if (ct.dataset.dualTitleOriginal) {
-      ct.textContent = ct.dataset.dualTitleOriginal;
+      updateCellText(ct, ct.dataset.dualTitleOriginal);
     }
     if (ct.dataset.dualTitleOriginal) delete ct.dataset.dualTitleOriginal;
   }
@@ -319,7 +328,12 @@ function injectTranslation(div: HTMLElement, item: Zotero.Item) {
   if (showTranslatedOnly) {
     cleanupDualRowClasses(div, primaryCell, item);
     const cellText = primaryCell.querySelector('.cell-text') as HTMLElement | null;
-    if (cellText) cellText.textContent = translation;
+    if (cellText) {
+      // 更新文本节点，保留子元素（如 zotero-style 进度条）
+      let tn = Array.from(cellText.childNodes).find(n => n.nodeType === 3);
+      if (tn) { tn.textContent = translation; }
+      else { cellText.insertBefore(cellText.ownerDocument!.createTextNode(translation || ''), cellText.firstChild); }
+    }
     return;
   }
 
@@ -331,7 +345,15 @@ function injectTranslation(div: HTMLElement, item: Zotero.Item) {
 
   const originalTitle = item.getField('title') as string;
   const ct = primaryCell.querySelector('.cell-text') as HTMLElement | null;
-  if (ct && originalTitle) ct.textContent = originalTitle;
+  // 恢复原标题（保留 cell-text 内的子元素，如 zotero-style 的阅读进度条）
+  if (ct && originalTitle) {
+    let textNode = Array.from(ct.childNodes).find(n => n.nodeType === 3);
+    if (textNode) {
+      textNode.textContent = originalTitle;
+    } else {
+      ct.insertBefore(ct.ownerDocument!.createTextNode(originalTitle), ct.firstChild);
+    }
+  }
   if (ct?.dataset.dualTitleOriginal) delete ct.dataset.dualTitleOriginal;
 
   let firstLine = primaryCell.querySelector('.dual-row-first-line') as HTMLElement;
@@ -351,7 +373,7 @@ function injectTranslation(div: HTMLElement, item: Zotero.Item) {
   const colorSwatch = primaryCell.querySelector(':scope > .colored-tag-swatches') as HTMLElement;
   if (colorSwatch) firstLineElements.push(colorSwatch);
   const cellText = primaryCell.querySelector(':scope > .cell-text') as HTMLElement;
-  if (cellText) firstLineElements.push(cellText);
+  if (cellText) { firstLineElements.push(cellText); cellText.style.position = 'relative'; }
 
   while (firstLine.firstChild) firstLine.removeChild(firstLine.firstChild);
   for (const el of firstLineElements) {
