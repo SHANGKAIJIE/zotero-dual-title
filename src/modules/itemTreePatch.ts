@@ -261,8 +261,9 @@ function ensureChildHeights() {
 }
 
 function updateCellText(ct: HTMLElement, text: string) {
-  let tn = Array.from(ct.childNodes).find(n => n.nodeType === 3);
-  if (tn) { tn.textContent = text; }
+  const childNodes = Array.from(ct.childNodes) as Node[];
+  let tn = childNodes.find(n => n.nodeType === 3);
+  if (tn) { (tn as Text).textContent = text; }
   else { ct.insertBefore(ct.ownerDocument!.createTextNode(text), ct.firstChild); }
 }
 
@@ -307,49 +308,57 @@ function injectTranslation(div: HTMLElement, item: Zotero.Item) {
   }
 
   const translation = getTranslation(item);
+  const remark = getRemark(item);
   const dm = String(getPref('displayMode') || 'original-translated');
   const showOriginalOnly = dm === 'original';
   const showTranslatedOnly = dm === 'translated';
   const translationFirst = dm === 'translated-original';
-  const hasTranslation = !!translation;
+  const isRemarkMode = dm === 'original-remark' || dm === 'remark-original';
+  const remarkFirst = dm === 'remark-original';
 
-  Zotero.log(`[DualTitle-DEBUG] injectTranslation: item="${String(item.getField('title')).substring(0, 30)}" translation="${String(translation).substring(0, 30)}" hasTrans=${hasTranslation} dm=${dm}`);
+  // 第二行内容：简记模式用 remark，翻译模式用 translation
+  const secondLineContent = isRemarkMode ? remark : translation;
+  const secondLineFirst = isRemarkMode ? remarkFirst : translationFirst;
+  const hasSecondLine = !!secondLineContent;
 
-  if (!hasTranslation && !div.classList.contains('dual-row-item')) return;
+  Zotero.log(`[DualTitle-DEBUG] injectTranslation: item="${String(item.getField('title')).substring(0, 30)}" translation="${String(translation).substring(0, 30)}" remark="${String(remark).substring(0, 30)}" dm=${dm} hasSecond=${hasSecondLine}`);
+
+  if (!hasSecondLine && !div.classList.contains('dual-row-item')) return;
 
   const doc = div.ownerDocument || Zotero.getMainWindow()?.document;
   if (!doc) return;
 
-  if (showOriginalOnly || !hasTranslation) {
+  if (showOriginalOnly || !hasSecondLine) {
     cleanupDualRowClasses(div, primaryCell, item);
     return;
   }
 
+  // === 模式 2：仅翻译标题（替换原标题文字） ===
   if (showTranslatedOnly) {
     cleanupDualRowClasses(div, primaryCell, item);
     const cellText = primaryCell.querySelector('.cell-text') as HTMLElement | null;
     if (cellText) {
       // 更新文本节点，保留子元素（如 zotero-style 进度条）
-      let tn = Array.from(cellText.childNodes).find(n => n.nodeType === 3);
-      if (tn) { tn.textContent = translation; }
+      let tn = (Array.from(cellText.childNodes) as Node[]).find(n => n.nodeType === 3);
+      if (tn) { (tn as Text).textContent = translation || ''; }
       else { cellText.insertBefore(cellText.ownerDocument!.createTextNode(translation || ''), cellText.firstChild); }
     }
     return;
   }
 
-  // === 模式 3 & 4：双行显示 ===
+  // === 模式 3 & 4：双行显示（翻译或简记） ===
   div.classList.add('dual-row-item');
   primaryCell.classList.add('dual-row-primary');
   primaryCell.classList.toggle('has-translation', true);
-  primaryCell.classList.toggle('translation-first', translationFirst);
+  primaryCell.classList.toggle('translation-first', secondLineFirst);
 
   const originalTitle = item.getField('title') as string;
   const ct = primaryCell.querySelector('.cell-text') as HTMLElement | null;
   // 恢复原标题（保留 cell-text 内的子元素，如 zotero-style 的阅读进度条）
   if (ct && originalTitle) {
-    let textNode = Array.from(ct.childNodes).find(n => n.nodeType === 3);
+    let textNode = (Array.from(ct.childNodes) as Node[]).find(n => n.nodeType === 3);
     if (textNode) {
-      textNode.textContent = originalTitle;
+      (textNode as Text).textContent = originalTitle;
     } else {
       ct.insertBefore(ct.ownerDocument!.createTextNode(originalTitle), ct.firstChild);
     }
@@ -388,7 +397,7 @@ function injectTranslation(div: HTMLElement, item: Zotero.Item) {
     transSpan.className = 'dual-row-translation';
     primaryCell.appendChild(transSpan);
   }
-  transSpan.textContent = translation || '';
+  transSpan.textContent = secondLineContent || '';
   transSpan.style.paddingLeft = `${alignPadding}px`;
 
   let fontSize = parseFloat(String(getPref('translationFontSize') || '12'));
@@ -404,7 +413,7 @@ function injectTranslation(div: HTMLElement, item: Zotero.Item) {
 
   let gap = parseInt(String(getPref('translationGap') || '2'), 10);
   if (isNaN(gap) || gap < 0 || gap > 40) gap = 2;
-  if (translationFirst) {
+  if (secondLineFirst) {
     transSpan.style.marginTop = '0';
     transSpan.style.marginBottom = `${gap}px`;
   } else {
@@ -414,8 +423,22 @@ function injectTranslation(div: HTMLElement, item: Zotero.Item) {
 }
 
 function getTranslation(item: Zotero.Item): string | null {
+  return getFieldFromExtra(item, ["dual-row-translation", "title-translation"]);
+}
+
+function getRemark(item: Zotero.Item): string | null {
+  return getFieldFromExtra(item, ["remark"]);
+}
+
+/**
+ * 从 extra 字段中按 key 列表查找值（优先级从前往后）
+ */
+function getFieldFromExtra(item: Zotero.Item, keys: string[]): string | null {
   const extra = item.getField('extra') as string;
   if (!extra) return null;
+  const normalizedKeys = keys.map(k =>
+    k.replace(/([a-z])([A-Z])/g, '$1-$2').toLowerCase().replace(/[\s_]+/g, '-')
+  );
   const lines = extra.split('\n');
   for (const line of lines) {
     const match = line.match(/^([a-zA-Z][a-zA-Z -_]+):\s*(.+)$/);
@@ -424,7 +447,7 @@ function getTranslation(item: Zotero.Item): string | null {
       .replace(/([a-z])([A-Z])/g, '$1-$2')
       .toLowerCase()
       .replace(/[\s_]+/g, '-');
-    if (key === 'dual-row-translation' || key === 'title-translation') {
+    if (normalizedKeys.includes(key)) {
       return match[2].trim();
     }
   }
