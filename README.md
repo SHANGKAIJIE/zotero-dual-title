@@ -4,7 +4,7 @@
 
 ![Zotero 7+](https://img.shields.io/badge/Zotero-7%2F8%2F9-green)
 ![License](https://img.shields.io/badge/License-AGPL--3.0-blue)
-![Version](https://img.shields.io/badge/Version-0.1.1-blue)
+![Version](https://img.shields.io/badge/Version-0.1.3-blue)
 
 <img width="905" height="395" alt="image" src="https://github.com/user-attachments/assets/44025aec-47e4-4632-81c2-6488e7a883c0" />
 
@@ -14,11 +14,14 @@
 
 - **双行标题显示**：在条目列表的标题列下方自动显示翻译标题，无需额外列
 - **PDF Translate 集成**：通过 [Zotero PDF Translate](https://github.com/windingwind/zotero-pdf-translate) 自动翻译条目标题
-- **显示模式**：支持四种显示模式：
+- **显示模式**：支持六种显示模式：
   - 原标题 ＋ 翻译标题（默认）
   - 翻译标题 ＋ 原标题
+  - 原标题 ＋ 简记
+  - 简记 ＋ 原标题
   - 仅原标题
   - 仅翻译标题
+- **简记兼容**：支持从 extra 字段 `remark` 键读取简记内容，与翻译标题使用相同的字号/颜色设置
 - **条目行高调整**：可调节双行显示时的行高倍率（支持小数）
 - **下属条目行高**：独立控制附件、笔记等下属条目的行高（跟随主条目 / 保持不变）
 - **翻译颜色自定义**：自由选择翻译标题的文字颜色，支持恢复默认
@@ -58,9 +61,9 @@ npm run build
 | 选项 | 默认值 | 说明 |
 |------|--------|------|
 | 启用双行标题显示 | 启用 | 插件总开关 |
-| 标题内容 | 原标题 ＋ 翻译标题 | 四种显示模式 |
-| 翻译字号 | 12px | 翻译标题的字体大小 |
-| 翻译颜色 | — | 翻译标题的文字颜色（拾色器选择，可恢复默认） |
+| 标题内容 | 原标题 ＋ 翻译标题 | 六种显示模式（含简记） |
+| 翻译/简记 字号 | 12px | 翻译标题和简记的字体大小 |
+| 翻译/简记 颜色 | — | 翻译标题和简记的文字颜色（拾色器选择，可恢复默认） |
 | 标题间距 | 2px | 原标题行与翻译行之间的间距 |
 | 主条目行高 | 2 倍 | 有翻译的主条目行高倍率（支持小数） |
 | 下属条目行高 | 保持不变 | 附件、笔记等下属条目的行高策略（跟随主条目 / 保持不变） |
@@ -108,16 +111,23 @@ VirtualizedTable._renderItem (patched)
 - **跟随模式**：清空自定义行高，所有行使用统一的 `_rowHeight`
 - **保持模式**：为非主条目行设置 `[index, _originalRowHeight]` 自定义高度
 
-### 翻译存储
+### 翻译与简记存储
 
-翻译结果保存在条目的 **extra 字段**中，key 为 `dualRowTranslation`：
+翻译结果和简记保存在条目的 **extra 字段**中：
 
 ```
 extra:
   dualRowTranslation: 翻译后的标题
+  remark: 用户添加的简记内容
 ```
 
 同时兼容 PDF Translate 的 `titleTranslation` 格式（优先读取 `dualRowTranslation`）。
+
+### 补充说明
+
+- **简记（remark）**：使用 `原文+简记` 或 `简记+原文` 模式时，第二行内容从 extra 字段的 `remark` 键读取。
+  字号、颜色、间距等设置与翻译标题共用同一组偏好。
+- **显示模式**：六种模式的核心逻辑由 `injectTranslation()` 函数统一处理。通过 `secondLineContent` 变量动态决定第二行是翻译还是简记，`secondLineFirst` 控制行序。
 
 ### 依赖关系
 
