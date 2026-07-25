@@ -43,8 +43,9 @@ function setExtraTranslation(item: Zotero.Item, key: string, value: string) {
   });
 
   if (!found) {
-    // Zotero 标准 extra 字段格式：Title-CamelCase: value
-    const displayKey = key.replace(/([a-z])([A-Z])/g, '$1-$2');
+    // 与原格式保持一致，直接使用原始 camelCase key（无中划线转换）
+    // 例如 "titleTranslation" 而非 "title-Translation"（匹配 PDF Translate 格式）
+    const displayKey = key;
     newLines.push(displayKey + ': ' + value);
   }
 
@@ -112,7 +113,7 @@ export async function translateTitle(item: Zotero.Item): Promise<string | null> 
   }
 
   if (result) {
-    setExtraTranslation(item, "dualRowTranslation", result);
+    setExtraTranslation(item, "titleTranslation", result);
     await item.saveTx();
   }
   return result;
@@ -151,12 +152,12 @@ async function translateBatchViaPDFT(items: Zotero.Item[]): Promise<void> {
 }
 
 /**
- * 从 extra 字段读取翻译（兼容 dualRowTranslation 和 titleTranslation）
+ * 从 extra 字段读取翻译（优先 titleTranslation，回退 dualRowTranslation）
  */
 export function getTranslationFromExtra(item: Zotero.Item): string | null {
-  let trans = getExtraTranslation(item, "dualRowTranslation");
+  let trans = getExtraTranslation(item, "titleTranslation");
   if (trans) return trans;
-  trans = getExtraTranslation(item, "titleTranslation");
+  trans = getExtraTranslation(item, "dualRowTranslation");
   if (trans) return trans;
   return null;
 }
