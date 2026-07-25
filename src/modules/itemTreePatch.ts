@@ -261,10 +261,15 @@ function ensureChildHeights() {
 }
 
 function updateCellText(ct: HTMLElement, text: string) {
-  const childNodes = Array.from(ct.childNodes) as Node[];
-  let tn = childNodes.find(n => n.nodeType === 3);
-  if (tn) { (tn as Text).textContent = text; }
-  else { ct.insertBefore(ct.ownerDocument!.createTextNode(text), ct.firstChild); }
+  // 保留非文本子元素，替换全部文本（移除 PDFT 插入的额外文本节点）
+  const nonTextChildren: Node[] = [];
+  for (const child of Array.from(ct.childNodes) as Node[]) {
+    if (child.nodeType !== 3) nonTextChildren.push(child);
+  }
+  ct.textContent = text;
+  for (const child of nonTextChildren) {
+    ct.appendChild(child);
+  }
 }
 
 function cleanupDualRowClasses(div: HTMLElement, primaryCell: HTMLElement, item?: Zotero.Item) {
@@ -275,7 +280,16 @@ function cleanupDualRowClasses(div: HTMLElement, primaryCell: HTMLElement, item?
   const ct = primaryCell.querySelector('.cell-text') as HTMLElement | null;
   if (ct) {
     if (item) {
-      const realTitle = item.getField('title') as string;
+      let realTitle = item.getField('title') as string;
+      // 清理 PDF Translate 早期版本导致的拼接污染（仅作用于显示）
+      try {
+        const trans = getTranslation(item);
+        const cleaned = stripAppendedTranslation(realTitle, trans);
+        if (cleaned && cleaned !== realTitle) {
+          Zotero.log(`[DualTitle-DEBUG] cleanup 清理拼接污染: len=${realTitle.length}->${cleaned.length}`);
+          realTitle = cleaned;
+        }
+      } catch (e) { /* silent */ }
       if (realTitle) updateCellText(ct, realTitle);
     } else if (ct.dataset.dualTitleOriginal) {
       updateCellText(ct, ct.dataset.dualTitleOriginal);
@@ -321,7 +335,7 @@ function injectTranslation(div: HTMLElement, item: Zotero.Item) {
   const secondLineFirst = isRemarkMode ? remarkFirst : translationFirst;
   const hasSecondLine = !!secondLineContent;
 
-  Zotero.log(`[DualTitle-DEBUG] injectTranslation: item="${String(item.getField('title')).substring(0, 30)}" translation="${String(translation).substring(0, 30)}" remark="${String(remark).substring(0, 30)}" dm=${dm} hasSecond=${hasSecondLine}`);
+  Zotero.log(`[DualTitle-DEBUG] injectTranslation: item="${String(item.getField('title')).substring(0, 50)}..." len=${(item.getField('title') as string).length} translation="${String(translation).substring(0, 30)}..." dm=${dm} hasSecond=${hasSecondLine}`);
 
   if (!hasSecondLine && !div.classList.contains('dual-row-item')) return;
 
@@ -338,10 +352,15 @@ function injectTranslation(div: HTMLElement, item: Zotero.Item) {
     cleanupDualRowClasses(div, primaryCell, item);
     const cellText = primaryCell.querySelector('.cell-text') as HTMLElement | null;
     if (cellText) {
-      // 更新文本节点，保留子元素（如 zotero-style 进度条）
-      let tn = (Array.from(cellText.childNodes) as Node[]).find(n => n.nodeType === 3);
-      if (tn) { (tn as Text).textContent = translation || ''; }
-      else { cellText.insertBefore(cellText.ownerDocument!.createTextNode(translation || ''), cellText.firstChild); }
+      // 保留非文本子元素（zotero-style 进度条等），替换全部文本（移除 PDFT 插入的额外文本节点）
+      const nonTextChildren: Node[] = [];
+      for (const child of Array.from(cellText.childNodes) as Node[]) {
+        if (child.nodeType !== 3) nonTextChildren.push(child);
+      }
+      cellText.textContent = translation || '';
+      for (const child of nonTextChildren) {
+        cellText.appendChild(child);
+      }
     }
     return;
   }
@@ -352,15 +371,34 @@ function injectTranslation(div: HTMLElement, item: Zotero.Item) {
   primaryCell.classList.toggle('has-translation', true);
   primaryCell.classList.toggle('translation-first', secondLineFirst);
 
-  const originalTitle = item.getField('title') as string;
+  // 读取原始 title 并清理 PDF Translate 早期版本导致的拼接污染
+  // 污染格式: "英文原标题中文翻译" (无分隔符)
+  // 检测方法：如果 title 末尾包含与 extra 中翻译相同的子串（允许标点差异），则剥离
+  let originalTitle = item.getField('title') as string;
+  if (originalTitle && secondLineContent && originalTitle.length > secondLineContent.length * 2) {
+    const transNormalized = getTranslation(item) || '';
+    const cleaned = stripAppendedTranslation(originalTitle, transNormalized);
+    if (cleaned && cleaned !== originalTitle) {
+      Zotero.log(`[DualTitle-DEBUG] 清理拼接污染: len=${originalTitle.length}->${cleaned.length} "${cleaned.substring(0, 30)}..."`);
+      originalTitle = cleaned;
+    }
+  }
+
   const ct = primaryCell.querySelector('.cell-text') as HTMLElement | null;
-  // 恢复原标题（保留 cell-text 内的子元素，如 zotero-style 的阅读进度条）
+  // 用清理后的原标题覆盖 cellText（保留 cell-text 内的非文本子元素，如 zotero-style 进度条）
   if (ct && originalTitle) {
-    let textNode = (Array.from(ct.childNodes) as Node[]).find(n => n.nodeType === 3);
-    if (textNode) {
-      (textNode as Text).textContent = originalTitle;
-    } else {
-      ct.insertBefore(ct.ownerDocument!.createTextNode(originalTitle), ct.firstChild);
+    // 保留非文本子元素（zotero-style 阅读进度条、colored-tag-swatches 等）
+    const nonTextChildren: Node[] = [];
+    for (const child of Array.from(ct.childNodes) as Node[]) {
+      if (child.nodeType !== 3) {
+        nonTextChildren.push(child);
+      }
+    }
+    // 替换全部文本内容（自动移除 PDFT 插入的额外文本节点）
+    ct.textContent = originalTitle;
+    // 重新追加非文本子元素
+    for (const child of nonTextChildren) {
+      ct.appendChild(child);
     }
   }
   if (ct?.dataset.dualTitleOriginal) delete ct.dataset.dualTitleOriginal;
@@ -423,7 +461,7 @@ function injectTranslation(div: HTMLElement, item: Zotero.Item) {
 }
 
 function getTranslation(item: Zotero.Item): string | null {
-  return getFieldFromExtra(item, ["dual-row-translation", "title-translation"]);
+  return getFieldFromExtra(item, ["title-translation", "dual-row-translation"]);
 }
 
 function getRemark(item: Zotero.Item): string | null {
@@ -433,6 +471,49 @@ function getRemark(item: Zotero.Item): string | null {
 /**
  * 从 extra 字段中按 key 列表查找值（优先级从前往后）
  */
+/**
+ * 检测并剥离拼接在原标题末尾的翻译文本
+ * PDF Translate 早期版本会将翻译直接追加到 title 末尾（无分隔符）
+ *
+ * 策略：
+ * 1. 如果 extra 中有 translation（中文），在 title 末尾查找该中文子串
+ * 2. 允许标点差异（句号/逗号/括号等变换）
+ * 3. 只剥离明确以中文/全角字符开始的部分（保护英文标题不被误切）
+ */
+function stripAppendedTranslation(title: string, translation: string | null): string | null {
+  if (!title || !translation) return null;
+  if (title.length <= translation.length) return null;
+
+  // 从 title 末尾开始，寻找与 translation 匹配的连续中文字符串
+  let matchLen = 0;
+  let minStart = title.length;
+
+  // 用翻译中最长的连续中文字段来定位
+  // 先把 translation 按非中文字符分割成片段
+  const segments = translation.match(/[\u4e00-\u9FFF\u3400-\u4DBF\u3000-\u303F\uff00-\uffef]+[\u4e00-\u9FFF\u3400-\u4DBF]*/g) || [];
+  for (const seg of segments) {
+    if (seg.length < 3) continue; // 至少 3 个中文字符才有意义
+    const pos = title.lastIndexOf(seg);
+    if (pos !== -1 && pos > title.length / 2) {
+      // 翻译出现在 title 的后半段 → 确认污染
+      if (pos < minStart) {
+        minStart = pos;
+        matchLen = Math.max(matchLen, seg.length);
+      }
+    }
+  }
+
+  if (minStart < title.length && matchLen >= 3) {
+    // 从第一个匹配的中文片段开始剥离
+    const cleaned = title.substring(0, minStart).trim();
+    if (cleaned && cleaned.length > translation.length / 2) {
+      return cleaned;
+    }
+  }
+
+  return null;
+}
+
 function getFieldFromExtra(item: Zotero.Item, keys: string[]): string | null {
   const extra = item.getField('extra') as string;
   if (!extra) return null;
