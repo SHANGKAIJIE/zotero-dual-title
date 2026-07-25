@@ -261,15 +261,7 @@ function ensureChildHeights() {
 }
 
 function updateCellText(ct: HTMLElement, text: string) {
-  // 保留非文本子元素，替换全部文本（移除 PDFT 插入的额外文本节点）
-  const nonTextChildren: Node[] = [];
-  for (const child of Array.from(ct.childNodes) as Node[]) {
-    if (child.nodeType !== 3) nonTextChildren.push(child);
-  }
   ct.textContent = text;
-  for (const child of nonTextChildren) {
-    ct.appendChild(child);
-  }
 }
 
 function cleanupDualRowClasses(div: HTMLElement, primaryCell: HTMLElement, item?: Zotero.Item) {
@@ -352,15 +344,7 @@ function injectTranslation(div: HTMLElement, item: Zotero.Item) {
     cleanupDualRowClasses(div, primaryCell, item);
     const cellText = primaryCell.querySelector('.cell-text') as HTMLElement | null;
     if (cellText) {
-      // 保留非文本子元素（zotero-style 进度条等），替换全部文本（移除 PDFT 插入的额外文本节点）
-      const nonTextChildren: Node[] = [];
-      for (const child of Array.from(cellText.childNodes) as Node[]) {
-        if (child.nodeType !== 3) nonTextChildren.push(child);
-      }
       cellText.textContent = translation || '';
-      for (const child of nonTextChildren) {
-        cellText.appendChild(child);
-      }
     }
     return;
   }
@@ -385,21 +369,9 @@ function injectTranslation(div: HTMLElement, item: Zotero.Item) {
   }
 
   const ct = primaryCell.querySelector('.cell-text') as HTMLElement | null;
-  // 用清理后的原标题覆盖 cellText（保留 cell-text 内的非文本子元素，如 zotero-style 进度条）
+  // 用清理后的原标题覆盖 cellText
   if (ct && originalTitle) {
-    // 保留非文本子元素（zotero-style 阅读进度条、colored-tag-swatches 等）
-    const nonTextChildren: Node[] = [];
-    for (const child of Array.from(ct.childNodes) as Node[]) {
-      if (child.nodeType !== 3) {
-        nonTextChildren.push(child);
-      }
-    }
-    // 替换全部文本内容（自动移除 PDFT 插入的额外文本节点）
     ct.textContent = originalTitle;
-    // 重新追加非文本子元素
-    for (const child of nonTextChildren) {
-      ct.appendChild(child);
-    }
   }
   if (ct?.dataset.dualTitleOriginal) delete ct.dataset.dualTitleOriginal;
 
@@ -411,16 +383,16 @@ function injectTranslation(div: HTMLElement, item: Zotero.Item) {
   }
 
   const firstLineElements: HTMLElement[] = [];
-  const indent = primaryCell.querySelector(':scope > .cell-indent') as HTMLElement;
+  const indent = primaryCell.querySelector('.cell-indent') as HTMLElement;
   if (indent) firstLineElements.push(indent);
-  const twisty = primaryCell.querySelector(':scope > .twisty, :scope > .spacer-twisty') as HTMLElement;
+  const twisty = primaryCell.querySelector('.twisty, .spacer-twisty') as HTMLElement;
   if (twisty) firstLineElements.push(twisty);
-  const cellIcon = primaryCell.querySelector(':scope > .cell-icon, :scope > .icon-item-type') as HTMLElement;
+  const cellIcon = primaryCell.querySelector('.cell-icon, .icon-item-type') as HTMLElement;
   if (cellIcon) firstLineElements.push(cellIcon);
-  const colorSwatch = primaryCell.querySelector(':scope > .colored-tag-swatches') as HTMLElement;
+  const colorSwatch = primaryCell.querySelector('.colored-tag-swatches') as HTMLElement;
   if (colorSwatch) firstLineElements.push(colorSwatch);
-  const cellText = primaryCell.querySelector(':scope > .cell-text') as HTMLElement;
-  if (cellText) { firstLineElements.push(cellText); cellText.style.position = 'relative'; }
+  const cellTextEl = primaryCell.querySelector('.cell-text') as HTMLElement;
+  if (cellTextEl) { firstLineElements.push(cellTextEl); cellTextEl.style.position = 'relative'; }
 
   while (firstLine.firstChild) firstLine.removeChild(firstLine.firstChild);
   for (const el of firstLineElements) {
