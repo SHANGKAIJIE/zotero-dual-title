@@ -261,7 +261,25 @@ function ensureChildHeights() {
 }
 
 function updateCellText(ct: HTMLElement, text: string) {
-  ct.textContent = text;
+  // 只替换第一个文本节点，保留其他子元素（Ethereal Style 进度条等）
+  const beforeNodeCount = ct.childNodes.length;
+  let textNode: Node | null = null;
+  let removedCount = 0;
+  for (const child of Array.from(ct.childNodes) as Node[]) {
+    if (child.nodeType === 3 && !textNode) {
+      textNode = child;
+      (textNode as Text).textContent = text;
+    } else if (child.nodeType === 3 && textNode) {
+      ct.removeChild(child);
+      removedCount++;
+    }
+  }
+  if (!textNode) {
+    ct.insertBefore(ct.ownerDocument!.createTextNode(text), ct.firstChild);
+    Zotero.log(`[DualTitle-DEBUG] updateCellText: created new textNode, childNodes=${ct.childNodes.length}`);
+  } else if (removedCount > 0) {
+    Zotero.log(`[DualTitle-DEBUG] updateCellText: removed ${removedCount} extra text nodes, childNodes=${ct.childNodes.length}`);
+  }
 }
 
 function cleanupDualRowClasses(div: HTMLElement, primaryCell: HTMLElement, item?: Zotero.Item) {
@@ -343,9 +361,7 @@ function injectTranslation(div: HTMLElement, item: Zotero.Item) {
   if (showTranslatedOnly) {
     cleanupDualRowClasses(div, primaryCell, item);
     const cellText = primaryCell.querySelector('.cell-text') as HTMLElement | null;
-    if (cellText) {
-      cellText.textContent = translation || '';
-    }
+    if (cellText) updateCellText(cellText, translation || '');
     return;
   }
 
@@ -369,9 +385,13 @@ function injectTranslation(div: HTMLElement, item: Zotero.Item) {
   }
 
   const ct = primaryCell.querySelector('.cell-text') as HTMLElement | null;
-  // 用清理后的原标题覆盖 cellText
+  // 更新 cellText：只替换第一个文本节点，保留 Ethereal Style 进度条等子元素
   if (ct && originalTitle) {
-    ct.textContent = originalTitle;
+    updateCellText(ct, originalTitle);
+    // 验证：再次读取 cellText 的 textContent 确认是否正确
+    if (ct.textContent!.length !== originalTitle.length) {
+      Zotero.log(`[DualTitle-DEBUG] WARN: cellText length mismatch: expected=${originalTitle.length} actual=${ct.textContent!.length}`);
+    }
   }
   if (ct?.dataset.dualTitleOriginal) delete ct.dataset.dualTitleOriginal;
 
