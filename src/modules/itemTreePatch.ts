@@ -262,7 +262,6 @@ function ensureChildHeights() {
 
 function updateCellText(ct: HTMLElement, text: string) {
   // 只替换第一个文本节点，保留其他子元素（Ethereal Style 进度条等）
-  const beforeNodeCount = ct.childNodes.length;
   let textNode: Node | null = null;
   let removedCount = 0;
   for (const child of Array.from(ct.childNodes) as Node[]) {
@@ -275,10 +274,17 @@ function updateCellText(ct: HTMLElement, text: string) {
     }
   }
   if (!textNode) {
+    // 没有直接文本节点（cellText 只有非文本子元素，如 Ethereal Style span）
+    // 直接设置 textContent = text 会移除所有子元素（丢失进度条）
+    // 改用 insertBefore + 清空子元素内的文本
     ct.insertBefore(ct.ownerDocument!.createTextNode(text), ct.firstChild);
-    Zotero.log(`[DualTitle-DEBUG] updateCellText: created new textNode, childNodes=${ct.childNodes.length}`);
-  } else if (removedCount > 0) {
-    Zotero.log(`[DualTitle-DEBUG] updateCellText: removed ${removedCount} extra text nodes, childNodes=${ct.childNodes.length}`);
+    const children = Array.from(ct.childNodes) as Node[];
+    for (let i = 1; i < children.length; i++) {
+      const child = children[i];
+      if (child.nodeType !== 3 && child.textContent) {
+        child.textContent = '';
+      }
+    }
   }
 }
 
@@ -384,14 +390,15 @@ function injectTranslation(div: HTMLElement, item: Zotero.Item) {
     }
   }
 
-  const ct = primaryCell.querySelector('.cell-text') as HTMLElement | null;
+  const ct = Array.from(primaryCell.children).find((el) => el.classList.contains('cell-text')) as HTMLElement | null;
   // 更新 cellText：只替换第一个文本节点，保留 Ethereal Style 进度条等子元素
   if (ct && originalTitle) {
     updateCellText(ct, originalTitle);
-    // 验证：再次读取 cellText 的 textContent 确认是否正确
-    if (ct.textContent!.length !== originalTitle.length) {
-      Zotero.log(`[DualTitle-DEBUG] WARN: cellText length mismatch: expected=${originalTitle.length} actual=${ct.textContent!.length}`);
-    }
+  }
+  // 清除 firstLine 中的旧 cellText（如果有，从上一轮渲染残留）
+  const oldCellTextInFirst = primaryCell.querySelector('.dual-row-first-line .cell-text') as HTMLElement | null;
+  if (oldCellTextInFirst && oldCellTextInFirst !== ct) {
+    oldCellTextInFirst.remove();
   }
   if (ct?.dataset.dualTitleOriginal) delete ct.dataset.dualTitleOriginal;
 
@@ -411,7 +418,8 @@ function injectTranslation(div: HTMLElement, item: Zotero.Item) {
   if (cellIcon) firstLineElements.push(cellIcon);
   const colorSwatch = primaryCell.querySelector('.colored-tag-swatches') as HTMLElement;
   if (colorSwatch) firstLineElements.push(colorSwatch);
-  const cellTextEl = primaryCell.querySelector('.cell-text') as HTMLElement;
+  // cellText — 只找 primaryCell 的直接子级（Zotero 新渲染的），排除 firstLine 中的残留
+  const cellTextEl = Array.from(primaryCell.children).find((el) => el.classList.contains('cell-text')) as HTMLElement | null;
   if (cellTextEl) { firstLineElements.push(cellTextEl); cellTextEl.style.position = 'relative'; }
 
   while (firstLine.firstChild) firstLine.removeChild(firstLine.firstChild);
