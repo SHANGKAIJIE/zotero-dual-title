@@ -484,6 +484,10 @@ function stripAppendedTranslation(title: string, translation: string | null): st
   if (!title || !translation) return null;
   if (title.length <= translation.length) return null;
 
+  // 如果原标题已经包含中文字符，跳过拼接检测
+  // PDFT 拼接翻译只可能发生在英文标题上，中文标题无需处理
+  if (/[\u4e00-\u9FFF\u3400-\u4DBF]/.test(title)) return null;
+
   // 从 title 末尾开始，寻找与 translation 匹配的连续中文字符串
   let matchLen = 0;
   let minStart = title.length;
