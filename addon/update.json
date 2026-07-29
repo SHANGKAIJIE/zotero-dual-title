@@ -3,6 +3,10 @@
     "dualtitle@dual-title.zotero": {
       "updates": [
         {
+          "version": "0.1.6",
+          "update_link": "https://github.com/SHANGKAIJIE/zotero-dual-title/releases/download/v0.1.6/dual-title.xpi"
+        },
+        {
           "version": "0.1.5",
           "update_link": "https://github.com/SHANGKAIJIE/zotero-dual-title/releases/download/v0.1.5/dual-title.xpi"
         },

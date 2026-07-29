@@ -441,6 +441,17 @@ function injectTranslation(div: HTMLElement, item: Zotero.Item) {
   if (cellIcon) firstLineElements.push(cellIcon);
   const colorSwatch = primaryCell.querySelector('.colored-tag-swatches') as HTMLElement;
   if (colorSwatch) firstLineElements.push(colorSwatch);
+  // 收集 emoji 标签：原生 Zotero（itemTreeRow.js）将每个 emoji 渲染为独立
+  // .tag-swatch.emoji span（不在 .colored-tag-swatches 容器内），
+  // 必须逐个收集搬入 firstLine，否则会滞留在 .dual-row-first-line 之外
+  // 导致多 emoji 垂直堆叠、原标题被挤走的布局 bug。
+  const emojiSwatches = Array.from(primaryCell.children).filter(
+    (el): el is HTMLElement =>
+      !!el.classList &&
+      el.classList.contains('tag-swatch') &&
+      el.classList.contains('emoji'),
+  );
+  for (const es of emojiSwatches) firstLineElements.push(es);
   // cellText — 只找 primaryCell 的直接子级（Zotero 新渲染的），排除 firstLine 中的残留
   const cellTextEl = Array.from(primaryCell.children).find((el) => el.classList.contains('cell-text')) as HTMLElement | null;
   if (cellTextEl) { firstLineElements.push(cellTextEl); cellTextEl.style.position = 'relative'; }
