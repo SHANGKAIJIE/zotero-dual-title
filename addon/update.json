@@ -4,14 +4,15 @@
       "updates": [
         {
           "version": "0.1.5",
-          "update_link": "https://github.com/SHANGKAIJIE/zotero-dual-title/releases/download/v0.1.5/dual-title.xpi",
-          "update_hash": "sha512:9a2c04427a2a6426eb370169830d93825086d5cf9e5155b8b0c072d699b07b4ce094eb19e3b179699998f12ff78bf805aa247dfd9d2f862eac2d205c5151585b",
-          "applications": {
-            "zotero": {
-              "strict_min_version": "6.999",
-              "strict_max_version": "10.9.9"
-            }
-          }
+          "update_link": "https://github.com/SHANGKAIJIE/zotero-dual-title/releases/download/v0.1.5/dual-title.xpi"
+        },
+        {
+          "version": "0.1.3",
+          "update_link": "https://github.com/SHANGKAIJIE/zotero-dual-title/releases/download/v0.1.3/dual-title.xpi"
+        },
+        {
+          "version": "0.1.2",
+          "update_link": "https://github.com/SHANGKAIJIE/zotero-dual-title/releases/download/v0.1.2/dual-title.xpi"
         },
         {
           "version": "0.1.1",
