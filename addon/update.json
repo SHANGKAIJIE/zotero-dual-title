@@ -1,0 +1,16 @@
+{
+  "addons": {
+    "dualtitle@dual-title.zotero": {
+      "updates": [
+        {
+          "version": "0.1.1",
+          "update_link": "https://github.com/SHANGKAIJIE/zotero-dual-title/releases/download/v0.1.1/dual-title.xpi"
+        },
+        {
+          "version": "0.1.0",
+          "update_link": "https://github.com/SHANGKAIJIE/zotero-dual-title/releases/download/v0.1.0/dual-title.xpi"
+        }
+      ]
+    }
+  }
+}

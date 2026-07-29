@@ -1,0 +1,20 @@
+{
+  "manifest_version": 2,
+  "name": "__addonName__",
+  "version": "__buildVersion__",
+  "description": "__description__",
+  "homepage_url": "__homepage__",
+  "author": "__author__",
+  "icons": {
+    "16": "content/icons/icon-16.png",
+    "32": "content/icons/icon.png",
+    "48": "content/icons/icon.png"
+  },
+  "applications": {
+    "zotero": {
+      "id": "__addonID__",
+      "strict_min_version": "6.999",
+      "strict_max_version": "10.9.9"
+    }
+  }
+}
