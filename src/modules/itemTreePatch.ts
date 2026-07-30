@@ -363,15 +363,14 @@ function injectTranslation(div: HTMLElement, item: Zotero.Item) {
   const translation = getTranslation(item);
   const remark = getRemark(item);
   const dm = String(getPref('displayMode') || 'original-translated');
+  const titleOrder = String(getPref('titleOrder') || 'original-first');
   const showOriginalOnly = dm === 'original';
   const showTranslatedOnly = dm === 'translated';
-  const translationFirst = dm === 'translated-original';
-  const isRemarkMode = dm === 'original-remark' || dm === 'remark-original';
-  const remarkFirst = dm === 'remark-original';
+  const isRemarkMode = dm === 'original-remark';
 
   // 第二行内容：简记模式用 remark，翻译模式用 translation
   const secondLineContent = isRemarkMode ? remark : translation;
-  const secondLineFirst = isRemarkMode ? remarkFirst : translationFirst;
+  const secondLineFirst = titleOrder === 'subtitle-first';
   const hasSecondLine = !!secondLineContent;
 
   Zotero.log(`[DualTitle-DEBUG] injectTranslation: item="${String(item.getField('title')).substring(0, 50)}..." len=${(item.getField('title') as string).length} translation="${String(translation).substring(0, 30)}..." dm=${dm} hasSecond=${hasSecondLine}`);
@@ -482,6 +481,10 @@ function injectTranslation(div: HTMLElement, item: Zotero.Item) {
   } else {
     transSpan.style.color = '';
   }
+
+  // 副标题字重（v0.1.7 新增）
+  const fontWeight = String(getPref('subtitleFontWeight') || 'normal');
+  transSpan.style.fontWeight = fontWeight;
 
   let gap = parseInt(String(getPref('translationGap') || '2'), 10);
   if (isNaN(gap) || gap < 0 || gap > 40) gap = 2;

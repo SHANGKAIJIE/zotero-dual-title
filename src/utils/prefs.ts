@@ -10,6 +10,8 @@ const PREFS_PREFIX = config.prefsPrefix;
 const DEFAULT_VALUES: Record<string, any> = {
   enableDualTitle: true,
   displayMode: "original-translated",
+  titleOrder: "original-first",
+  subtitleFontWeight: "normal",
   translationFontSize: 12,
   translationColor: "",
   translationGap: 2,

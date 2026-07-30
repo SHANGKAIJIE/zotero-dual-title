@@ -16,6 +16,8 @@ import { translateTitle, isChinese, getTranslationFromExtra } from "./modules/tr
 const DEFAULT_PREFS: Record<string, any> = {
   enableDualTitle: true,
   displayMode: "original-translated",
+  titleOrder: "original-first",
+  subtitleFontWeight: "normal",
   translationFontSize: 12,
   translationGap: 2,
   rowHeightMultiplier: "2",
@@ -32,6 +34,9 @@ async function onStartup() {
 
   // 确保默认偏好已设置（双保险，bootstrap 已加载 prefs.js）
   ensureDefaultPrefs();
+
+  // 一次性迁移：v0.1.6 之前的 6 值 displayMode → v0.1.7 的 4 值 + titleOrder
+  migrateLegacyDisplayMode();
 
   // 注册通知监听
   registerNotifier();
@@ -103,6 +108,33 @@ function ensureDefaultPrefs() {
 }
 
 /**
+ * 一次性迁移：v0.1.6 之前的 displayMode 6 值集合 → v0.1.7 的 4 值 + titleOrder 组合
+ *
+ * 迁移判据：displayMode 是否属于旧值集合 {translated-original, remark-original}
+ * - translated-original → original-translated + titleOrder=subtitle-first
+ * - remark-original     → original-remark     + titleOrder=subtitle-first
+ * 新值集合不触发，幂等：迁移后 displayMode 必属于
+ * {original, translated, original-translated, original-remark}，下次启动不再进入分支。
+ */
+function migrateLegacyDisplayMode() {
+  const prefix = addon.data.config.prefsPrefix;
+  try {
+    const dm = String(Zotero.Prefs.get(`${prefix}.displayMode`, true) ?? "");
+    if (dm === "translated-original" || dm === "remark-original") {
+      const newDm =
+        dm === "translated-original" ? "original-translated" : "original-remark";
+      Zotero.Prefs.set(`${prefix}.displayMode`, newDm, true);
+      Zotero.Prefs.set(`${prefix}.titleOrder`, "subtitle-first", true);
+      Zotero.log(
+        `[DualTitle] Migrated displayMode: ${dm} → ${newDm} + titleOrder=subtitle-first`,
+      );
+    }
+  } catch (e) {
+    Zotero.log("[DualTitle] migrateLegacyDisplayMode error: " + e);
+  }
+}
+
+/**
  * 注册偏好变化观察者
  * 当 enableDualTitle / displayMode / translationFontSize / translationGap / rowHeightMultiplier 改变时刷新列表
  */
@@ -114,6 +146,8 @@ function registerPrefObserver() {
   const watchedKeys = [
     "enableDualTitle",
     "displayMode",
+    "titleOrder",
+    "subtitleFontWeight",
     "translationFontSize",
     "translationColor",
     "translationGap",
@@ -296,6 +330,8 @@ function bindPrefPaneUI(win: Window | undefined) {
   // menulist 是 XUL 元素，但为保险起见仍手动绑定
   const menulistBindings = [
     { id: `zotero-prefpane-${ref}-displayMode`, key: "displayMode" },
+    { id: `zotero-prefpane-${ref}-titleOrder`, key: "titleOrder" },
+    { id: `zotero-prefpane-${ref}-subtitleFontWeight`, key: "subtitleFontWeight" },
     { id: `zotero-prefpane-${ref}-childRowHeightMode`, key: "childRowHeightMode" },
   ];
   for (const { id, key } of menulistBindings) {

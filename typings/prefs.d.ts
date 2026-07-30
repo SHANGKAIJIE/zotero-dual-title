@@ -9,6 +9,8 @@ declare namespace _ZoteroTypes {
     PluginPrefsMap: {
       "enableDualTitle": boolean;
       "displayMode": string;
+      "titleOrder": string;
+      "subtitleFontWeight": string;
       "translationFontSize": number;
       "translationColor": string;
       "translationGap": number;

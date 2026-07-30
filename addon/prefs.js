@@ -2,6 +2,8 @@
 // 注意：translationFontSize 使用 px（默认 12），不再使用 em 倍率
 pref("enableDualTitle", true);
 pref("displayMode", "original-translated");
+pref("titleOrder", "original-first");
+pref("subtitleFontWeight", "normal");
 pref("translationFontSize", 12);
 pref("translationColor", "");
 pref("translationGap", 2);

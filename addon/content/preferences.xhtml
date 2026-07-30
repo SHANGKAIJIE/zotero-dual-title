@@ -44,7 +44,7 @@
       data-l10n-id="pref-enable-dual-title"
     />
 
-    <!-- 标题内容（使用 menulist，参考 eudic 样式） -->
+    <!-- 标题内容（使用 menulist，4 选项） -->
     <hbox align="center">
       <label class="pref-label" data-l10n-id="pref-display-mode" />
       <menulist
@@ -55,14 +55,40 @@
           <menuitem value="original" data-l10n-id="pref-display-mode-original" />
           <menuitem value="translated" data-l10n-id="pref-display-mode-translated" />
           <menuitem value="original-translated" data-l10n-id="pref-display-mode-original-translated" />
-          <menuitem value="translated-original" data-l10n-id="pref-display-mode-translated-original" />
           <menuitem value="original-remark" data-l10n-id="pref-display-mode-original-remark" />
-          <menuitem value="remark-original" data-l10n-id="pref-display-mode-remark-original" />
         </menupopup>
       </menulist>
     </hbox>
 
-    <!-- 翻译字号（px） -->
+    <!-- 标题顺序 -->
+    <hbox align="center">
+      <label class="pref-label" data-l10n-id="pref-title-order" />
+      <menulist
+        id="zotero-prefpane-__addonRef__-titleOrder"
+        style="min-width: 200px"
+      >
+        <menupopup>
+          <menuitem value="original-first" data-l10n-id="pref-title-order-original-first" />
+          <menuitem value="subtitle-first" data-l10n-id="pref-title-order-subtitle-first" />
+        </menupopup>
+      </menulist>
+    </hbox>
+
+    <!-- 标题间距（px） -->
+    <hbox align="center">
+      <label class="pref-label" data-l10n-id="pref-gap" />
+      <html:input
+        type="number"
+        min="0"
+        max="40"
+        step="1"
+        id="zotero-prefpane-__addonRef__-translationGap"
+        style="width: 80px"
+      />
+      <label data-l10n-id="pref-gap-unit" style="margin-left: 4px" />
+    </hbox>
+
+    <!-- 副标题字号（px） -->
     <hbox align="center">
       <label class="pref-label" data-l10n-id="pref-font-size" />
       <html:input
@@ -76,7 +102,7 @@
       <label data-l10n-id="pref-font-size-unit" style="margin-left: 4px" />
     </hbox>
 
-    <!-- 翻译颜色 -->
+    <!-- 副标题颜色 -->
     <hbox align="center">
       <label class="pref-label" data-l10n-id="pref-font-color" />
       <html:input
@@ -92,18 +118,18 @@
       ></label>
     </hbox>
 
-    <!-- 标题间距（px） -->
+    <!-- 副标题字重 -->
     <hbox align="center">
-      <label class="pref-label" data-l10n-id="pref-gap" />
-      <html:input
-        type="number"
-        min="0"
-        max="40"
-        step="1"
-        id="zotero-prefpane-__addonRef__-translationGap"
-        style="width: 80px"
-      />
-      <label data-l10n-id="pref-gap-unit" style="margin-left: 4px" />
+      <label class="pref-label" data-l10n-id="pref-subtitle-font-weight" />
+      <menulist
+        id="zotero-prefpane-__addonRef__-subtitleFontWeight"
+        style="min-width: 200px"
+      >
+        <menupopup>
+          <menuitem value="normal" data-l10n-id="pref-subtitle-font-weight-normal" />
+          <menuitem value="bold" data-l10n-id="pref-subtitle-font-weight-bold" />
+        </menupopup>
+      </menulist>
     </hbox>
 
     <!-- 主条目行高倍率 -->
