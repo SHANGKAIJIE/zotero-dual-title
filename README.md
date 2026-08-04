@@ -7,6 +7,8 @@
 
 在 Zotero 条目列表中将翻译标题显示为第二行，无需额外列。
 
+---
+
 <img width="1491" height="593" alt="示意图" src="https://github.com/user-attachments/assets/554c38d2-68f2-4e5d-88b1-a9109b67554b" />
 
 ---
