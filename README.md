@@ -5,8 +5,9 @@
 ![Zotero 7+](https://img.shields.io/badge/Zotero-7%2F8%2F9-green)
 ![License](https://img.shields.io/badge/License-AGPL--3.0-blue)
 ![Version](https://img.shields.io/badge/Version-0.1.7-blue)
+[![Using Zotero Plugin Template](https://img.shields.io/badge/Using-Zotero%20Plugin%20Template-blue?style=flat-square&logo=github)](https://github.com/windingwind/zotero-plugin-template)
 
-<img width="905" height="395" alt="image" src="https://github.com/user-attachments/assets/44025aec-47e4-4632-81c2-6488e7a883c0" />
+<img width="1491" height="593" alt="示意图" src="https://github.com/user-attachments/assets/554c38d2-68f2-4e5d-88b1-a9109b67554b" />
 
 ---
 
